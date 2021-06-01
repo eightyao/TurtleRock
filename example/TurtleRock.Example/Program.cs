@@ -12,6 +12,8 @@ namespace TurtleRock.Example
     private static TcpClient _client;
     static void Main(string[] args)
     {
+      //StartBenchmarkServer();
+      
       StartServer();
       var channel = StartClient();
       
@@ -55,6 +57,24 @@ namespace TurtleRock.Example
         .Start(new IPEndPoint(IPAddress.Any, 8888));
 
       return _server;
+    }
+
+    static void StartBenchmarkServer()
+    {
+      TcpServer s = new TcpServer(Environment.ProcessorCount * 2);
+      s.Option(ChannelOption.NoDelay, true)
+        .Option(ChannelOption.HighWriteWaterMark, 128 * 1024)
+        .Option(ChannelOption.LowWriteWaterMark, 64 * 1024)
+        .ServerOption(ChannelOption.ReuseAddress, true)
+        .ServerOption(ChannelOption.Backlog, 8192)
+        .StreamChainInitializer(newChannel =>
+        {
+          newChannel.Chain.Append("echo", new PingPongBenchmarkHandler());
+        })
+        .Start(new IPEndPoint(IPAddress.Any, 8887));
+
+      Console.Read();
+      s.Shutdown();
     }
   }
 }
