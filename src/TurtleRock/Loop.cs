@@ -162,19 +162,5 @@ namespace TurtleRock
         item = _scheduledQueue.Dequeue(now);
       }
     }
-    
-    private void MoveScheduledTask()
-    {
-      var now = HighResolutionTimeSpan.FromStartTimeSpan;
-      var item = _scheduledQueue.Dequeue(now);
-      while (item != null)
-      {
-        if (!_loopQueue.TryAdd(item))
-        {
-          _scheduledQueue.Enqueue(item);
-        }
-        item = _scheduledQueue.Dequeue(now);
-      }
-    }
   }
 }

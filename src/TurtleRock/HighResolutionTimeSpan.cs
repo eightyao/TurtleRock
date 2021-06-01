@@ -15,13 +15,11 @@ namespace TurtleRock
 
     static long GetTicksFromStart()
     {
-      //return TimeSpan.FromMilliseconds(Environment.TickCount).Ticks;
       return Stopwatch.GetTimestamp() - StartTicks;
     }
 
     static long TicksToPreciseTicks(long ticks)
     {
-      //return ticks;
       return Stopwatch.IsHighResolution
         ? (long)(ticks * PreciseRatio)
         : ticks;

@@ -6,22 +6,17 @@ namespace TurtleRock.Example
 {
   public class EchoHandler : AbstractChainHandler
   {
-    public int _readIdleCount;
+    private int _readIdleCount;
+    
     public override void OnChannelReceived(IChannelContext ctx, IBuffer buf)
     {
-      //_readIdleCount = 0;
-      // ctx.WriteAsync(buf);
-      // ctx.FlushAsync();
-      // var buf1 = new PooledHeapBuffer(1024);
-      // var buf2 = new PooledHeapBuffer(1024);
-      //
-      // buf1.WriteString("Your message is ", Encoding.UTF8);
-      // buf2.WriteBytes(buf.Array, buf.ReaderIndex, buf.ReadableBytes);
-      // buf.Release();
-      //
-      // ctx.Write(buf1);
-      // ctx.Write(buf2);
-      // ctx.Flush();
+      _readIdleCount = 0;
+      
+      string msg = buf.GetString(buf.ReadableBytes, Encoding.UTF8);
+      Console.WriteLine($"server received:{msg}");
+      
+      ctx.WriteAsync(buf);
+      ctx.FlushAsync();
     }
 
     public override void OnChannelDisconnected(IChannelContext ctx)
@@ -37,12 +32,10 @@ namespace TurtleRock.Example
 
     public override void OnChannelConnected(IChannelContext ctx)
     {
-      // var buf = new PooledHeapBuffer();
-      // buf.WriteString("Welcome to echo server", Encoding.UTF8);
-      // ctx.WriteAsync(buf);
-      // ctx.FlushAsync();
-      //
-      Console.WriteLine($"endpoint: {ctx.ClientChannel.RemoteEndPoint} connected.");
+      var buf = new PooledHeapBuffer();
+      buf.WriteString("Welcome to turtlerock echo server", Encoding.UTF8);
+      ctx.WriteAsync(buf);
+      ctx.FlushAsync();
     }
 
     public override void OnChannelException(IChannelContext ctx, Exception e)

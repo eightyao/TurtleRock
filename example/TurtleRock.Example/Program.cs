@@ -1,56 +1,60 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Net;
+using System.Text;
 using TurtleRock.Handler;
 
 namespace TurtleRock.Example
 {
   class Program
   {
+    private static TcpServer _server;
+    private static TcpClient _client;
     static void Main(string[] args)
     {
-      //TestServer();
-      TestClient();
+      StartServer();
+      var channel = StartClient();
+      
+      Console.Read();
+      
+      channel.Disconnect();
+      _client.Dispose();
+      _server.Shutdown();
     }
 
-    static void TestClient()
+    static TcpChannel StartClient()
     {
-      TcpClient c = new TcpClient();
-      c.Option(ChannelOption.NoDelay, true)
+      _client = new TcpClient(1);
+      _client.Option(ChannelOption.NoDelay, true)
         .StreamChainInitializer(newChannel =>
         {
-          newChannel.Chain.Append("echo", new EchoHandler());
+          newChannel.Chain.Append("HeadLengthDecoder", new HeadLengthDecoder(4, 4092 * 40));
+          newChannel.Chain.Append("headLengthAppender", new HeadLengthAppender());
+          newChannel.Chain.Append("echo", new ClientEchoHandler());
         });
 
-      var channel = c.ConnectAsync("127.0.0.1", 8003);
-      Console.Read();
-      c.Dispose();
+      var channel = _client.ConnectAsync("127.0.0.1", 8888);
+      return channel;
     }
 
-    static void TestServer()
+    static TcpServer StartServer()
     {
-      Console.WriteLine($"Process Id {Process.GetCurrentProcess().Id}");
-      TcpServer s = new TcpServer(Environment.ProcessorCount * 2);
-      s.Option(ChannelOption.NoDelay, true)
-         //.Option(ChannelOption.RecevieBufferCapacity, 8 * 1024)
+      _server = new TcpServer(Environment.ProcessorCount * 2);
+      _server.Option(ChannelOption.NoDelay, true)
         .Option(ChannelOption.HighWriteWaterMark, 128 * 1024)
         .Option(ChannelOption.LowWriteWaterMark, 64 * 1024)
         .ServerOption(ChannelOption.ReuseAddress, true)
         .ServerOption(ChannelOption.Backlog, 8192)
         .StreamChainInitializer(newChannel =>
         {
-          //newChannel.Chain.Append("HeadLengthDecoder", new HeadLengthDecoder(4, 4092 * 40));
-          //newChannel.Chain.Append("headLengthAppender", new HeadLengthAppender());
-          // newChannel.Chain.Append("toLower", new ToLowerHandler());
-          newChannel.Chain.Append("idle", new IdleHandler(5000, 0));
+          newChannel.Chain.Append("HeadLengthDecoder", new HeadLengthDecoder(4, 4092 * 40));
+          newChannel.Chain.Append("headLengthAppender", new HeadLengthAppender());
+          newChannel.Chain.Append("idle", new IdleHandler(3000, 0));
           newChannel.Chain.Append("echo", new EchoHandler());
         })
         .Start(new IPEndPoint(IPAddress.Any, 8888));
 
-      Console.WriteLine("tcp server started, press any key to quit...");
-      Console.Read();
-      s.Shutdown();
-      Console.WriteLine("tcp server shut down");
+      return _server;
     }
   }
 }

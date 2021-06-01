@@ -248,7 +248,7 @@ namespace TurtleRock
         WriteAsyncContext = null;
         ReadAsyncContext = null;
       }
-      catch (Exception e)
+      catch (Exception)
       {
         // ignored
       }
