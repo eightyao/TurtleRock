@@ -253,26 +253,4 @@ namespace TurtleRock
       Chain.FireChannelReceived(receiveBuf);
     }
   }
-
-  internal class ReceiveRunnable : ILoopRunnable, IExceptionCaught
-  {
-    private readonly TcpChannel _channel;
-    private readonly IBuffer _buffer;
-
-    public ReceiveRunnable(TcpChannel channel, IBuffer buffer)
-    {
-      _channel = channel;
-      _buffer = buffer;
-    }
-
-    public void Run()
-    {
-      _channel.Chain.FireChannelReceived(_buffer);
-    }
-
-    public void OnExceptionCaught(Exception e)
-    {
-      _channel.Chain.FireChannelException(e);
-    }
-  }
 }
